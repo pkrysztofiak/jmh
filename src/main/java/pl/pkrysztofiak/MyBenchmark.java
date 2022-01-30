@@ -31,16 +31,51 @@
 
 package pl.pkrysztofiak;
 
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
 
+@Warmup(iterations = 3, time = 1)
+@Measurement(iterations = 3, time = 1)
+@Fork(1)
+//@BenchmarkMode(Mode.AverageTime)
 public class MyBenchmark {
 
     @Benchmark
-    public void testMethod() {
-        // This is a demo/sample template for building your JMH benchmarks. Edit as needed.
-        // Put your benchmark code here.
+    public void emptyMethod() {
+
     }
 
+    //jit will determine that local variable is never passed anywhere. Return the value is the simplest trick to recover from this situation.
+    @Benchmark
+    public void addMethod() {
+        int i = 1 + 1;
+    }
+
+    //But I still do not measure nothing because 1 + 1 is constatn. Return changes nothing.
+    @Benchmark
+    public int returnAddMethod() {
+        return 1 + 1;
+    }
+
+    @Benchmark
+    public int returnStateAddMethod(State state) {
+        return state.value + state.value;
+    }
+
+    @Benchmark
+    public void blackholeAddMethod(Blackhole blackhole, State state) {
+        blackhole.consume(state.value + state.value);
+    }
+
+    @Benchmark
+    public void blackholeAndConsumeCPUAddMethod(Blackhole blackhole, State state) {
+        blackhole.consume(state.value + state.value);
+        Blackhole.consumeCPU(10);
+    }
+
+    @org.openjdk.jmh.annotations.State(Scope.Benchmark)
+    public static class State {
+        @Param({"1", "2"})
+        int value;
+    }
 }
